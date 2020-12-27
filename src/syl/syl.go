@@ -3,10 +3,12 @@ package syl
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/html"
@@ -18,8 +20,10 @@ type reservation struct {
 }
 
 // OptionFlags has option to execute
+// TODO: use it
 type OptionFlags struct {
-	repeats bool
+	repeats    bool
+	ignores404 bool
 }
 
 // siteInfo is an info of the website to open
@@ -29,7 +33,7 @@ type siteInfo struct {
 }
 
 // Run parses the request and executes
-func Run(url string, strDur string, opts *OptionFlags) {
+func Run(strDur, url string, opts *OptionFlags) {
 	d, err := time.ParseDuration(strDur)
 	if err != nil {
 		printRed(errInvalidDuration)
@@ -39,22 +43,36 @@ func Run(url string, strDur string, opts *OptionFlags) {
 	resp, err := http.Get(url)
 	fmt.Println(resp.StatusCode)
 	if err != nil {
-
+		printRed(err)
+		return
 	}
 	defer resp.Body.Close()
-	title, ok := getHtmlTitle(resp.Body)
-	if ok {
-		fmt.Println(title)
+	title, ok := getHTMLTitle(resp.Body)
+	if !ok {
+		title = url
 	}
+	fmt.Printf("See you later! %s 👋", title)
+
+	// prepare for exit from a client side
+	exit := make(chan os.Signal, 1)
+	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-time.After(d):
-		openURLWithBrowser(url)
+		err := openURLWithBrowser(url)
+		if err != nil {
+			printRed("Oops! We cannot open your link \n: %v", err)
+			return
+		}
+		printGreen("Happy to see you! I hope you enjoy 🎉")
+	case <-exit:
+		printGreen("Goodbye 👋")
+		os.Exit(1)
 	}
 
 }
 
-func openURLWithBrowser(url string) {
+func openURLWithBrowser(url string) error {
 	var err error
 
 	switch runtime.GOOS {
@@ -67,12 +85,10 @@ func openURLWithBrowser(url string) {
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	return err
 }
 
-func getHtmlTitle(r io.Reader) (string, bool) {
+func getHTMLTitle(r io.Reader) (string, bool) {
 	doc, err := html.Parse(r)
 	if err != nil {
 		panic("Fail to parse html")
@@ -82,7 +98,8 @@ func getHtmlTitle(r io.Reader) (string, bool) {
 }
 
 func traverse(n *html.Node) (string, bool) {
-	if isTitleElement(n) {
+	// check is title element
+	if n.Type == html.ElementNode && n.Data == "title" {
 		return n.FirstChild.Data, true
 	}
 
@@ -94,8 +111,4 @@ func traverse(n *html.Node) (string, bool) {
 	}
 
 	return "", false
-}
-
-func isTitleElement(n *html.Node) bool {
-	return n.Type == html.ElementNode && n.Data == "title"
 }
