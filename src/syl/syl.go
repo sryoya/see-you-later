@@ -14,6 +14,7 @@ import (
 
 var goOS = runtime.GOOS
 var startCmd = func(c *exec.Cmd) error { return c.Start() }
+var exit = func() { os.Exit(1) }
 
 type reservation struct {
 	siteInfo *siteInfo
@@ -55,8 +56,8 @@ func Run(durStr, url string, opts *OptionFlags) {
 	print("Hope to see you later! %s 👋\n", title)
 
 	// prepare for exit from a client-side action
-	exit := make(chan os.Signal, 1)
-	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
+	exitCh := make(chan os.Signal, 1)
+	signal.Notify(exitCh, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-time.After(d):
@@ -66,9 +67,10 @@ func Run(durStr, url string, opts *OptionFlags) {
 			return
 		}
 		printGreen("Happy to see you! I hope you enjoy 🎉")
-	case <-exit:
+		exit()
+	case <-exitCh:
 		printGreen("Goodbye 👋👋👋")
-		os.Exit(1)
+		exit()
 	}
 }
 
