@@ -42,17 +42,17 @@ func Run(durStr, url string, opts *OptionFlags) {
 		return
 	}
 
-	// check provided URL and get link
-	res, err := http.Get(url)
+	// check provided URL and get title of page
+	title, err := getPageTitle(url)
 	if err != nil {
-		printRed(err)
-		return
+		// It's an optional process and we will skip even if we get error
+		// TODO: enable to set flag to indicate whether ignore error here
+		printYellow(err)
 	}
-	defer res.Body.Close()
-	title, ok := getHTMLTitle(res)
-	if !ok {
+	if title == "" {
 		title = url
 	}
+
 	print("Hope to see you later! %s 👋\n", title)
 
 	// prepare for exit from a client-side action
@@ -100,31 +100,38 @@ func prepareCommand(url string) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func getHTMLTitle(r *http.Response) (string, bool) {
-	if r.StatusCode != http.StatusOK {
-		return "", false
+func getPageTitle(url string) (string, error) {
+	// check provided URL and get title of page
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
 	}
+	defer res.Body.Close()
 
+	return getHTMLTitle(res), nil
+}
+
+func getHTMLTitle(r *http.Response) string {
 	doc, err := html.Parse(r.Body)
 	if err != nil {
-		panic("Fail to parse html")
+		return ""
 	}
 
 	return traverse(doc)
 }
 
-func traverse(n *html.Node) (string, bool) {
-	// check is title element
+func traverse(n *html.Node) string {
+	// check if title element
 	if n.Type == html.ElementNode && n.Data == "title" {
-		return n.FirstChild.Data, true
+		return n.FirstChild.Data
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		result, ok := traverse(c)
-		if ok {
-			return result, ok
+		result := traverse(c)
+		if result != "" {
+			return result
 		}
 	}
 
-	return "", false
+	return ""
 }
