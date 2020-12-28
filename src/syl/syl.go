@@ -1,7 +1,6 @@
 package syl
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -35,8 +34,8 @@ type siteInfo struct {
 }
 
 // Run parses the request and executes
-func Run(strDur, url string, opts *OptionFlags) {
-	d, err := time.ParseDuration(strDur)
+func Run(durStr, url string, opts *OptionFlags) {
+	d, err := time.ParseDuration(durStr)
 	if err != nil {
 		printRed(errInvalidDuration)
 		return
@@ -53,7 +52,7 @@ func Run(strDur, url string, opts *OptionFlags) {
 	if !ok {
 		title = url
 	}
-	fmt.Printf("Hope to see you later! %s 👋\n", title)
+	print("Hope to see you later! %s 👋\n", title)
 
 	// prepare for exit from a client-side action
 	exit := make(chan os.Signal, 1)
