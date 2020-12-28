@@ -28,12 +28,13 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "see-you-later",
+	Args:  cobra.MinimumNArgs(2),
 	Short: "A tool that keeps a website you want to see and opens that later",
 	Long: `see-you-later(syl) is a CLI tool to keep a website you want to see and see that later.
 	This can be used when you find the site you want to view but you are busy and cannot view soon.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		syl.Run(args[1], args[0], nil)
+		syl.Run(args[0], args[1], nil)
 	},
 }
 
