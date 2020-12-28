@@ -2,7 +2,6 @@ package syl
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,6 +12,9 @@ import (
 
 	"golang.org/x/net/html"
 )
+
+var goOS = runtime.GOOS
+var startCmd = func(c *exec.Cmd) error { return c.Start() }
 
 type reservation struct {
 	siteInfo *siteInfo
@@ -40,20 +42,20 @@ func Run(strDur, url string, opts *OptionFlags) {
 		return
 	}
 
-	resp, err := http.Get(url)
-	fmt.Println(resp.StatusCode)
+	// check provided URL and get link
+	res, err := http.Get(url)
 	if err != nil {
 		printRed(err)
 		return
 	}
-	defer resp.Body.Close()
-	title, ok := getHTMLTitle(resp.Body)
+	defer res.Body.Close()
+	title, ok := getHTMLTitle(res)
 	if !ok {
 		title = url
 	}
-	fmt.Printf("See you later! %s 👋", title)
+	fmt.Printf("Hope to see you later! %s 👋\n", title)
 
-	// prepare for exit from a client side
+	// prepare for exit from a client-side action
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 
@@ -66,30 +68,43 @@ func Run(strDur, url string, opts *OptionFlags) {
 		}
 		printGreen("Happy to see you! I hope you enjoy 🎉")
 	case <-exit:
-		printGreen("Goodbye 👋")
+		printGreen("Goodbye 👋👋👋")
 		os.Exit(1)
 	}
-
 }
 
 func openURLWithBrowser(url string) error {
-	var err error
+	cmd, err := prepareCommand(url)
+	if err != nil {
+		return err
+	}
+
+	return startCmd(cmd)
+}
+
+func prepareCommand(url string) (*exec.Cmd, error) {
+	var cmd *exec.Cmd
 
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", url).Start()
+		cmd = exec.Command("xdg-open", url)
 	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
 	case "darwin":
-		err = exec.Command("open", url).Start()
+		cmd = exec.Command("open", url)
 	default:
-		err = fmt.Errorf("unsupported platform")
+		return nil, errUnsupportedOS
 	}
-	return err
+
+	return cmd, nil
 }
 
-func getHTMLTitle(r io.Reader) (string, bool) {
-	doc, err := html.Parse(r)
+func getHTMLTitle(r *http.Response) (string, bool) {
+	if r.StatusCode != http.StatusOK {
+		return "", false
+	}
+
+	doc, err := html.Parse(r.Body)
 	if err != nil {
 		panic("Fail to parse html")
 	}
