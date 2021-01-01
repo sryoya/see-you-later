@@ -101,7 +101,6 @@ func prepareCommand(url string) (*exec.Cmd, error) {
 }
 
 func getPageTitle(url string) (string, error) {
-	// check provided URL and get title of page
 	res, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -121,7 +120,6 @@ func getHTMLTitle(r *http.Response) string {
 }
 
 func traverse(n *html.Node) string {
-	// check if title element
 	if n.Type == html.ElementNode && n.Data == "title" {
 		return n.FirstChild.Data
 	}
