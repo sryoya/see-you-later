@@ -2,13 +2,18 @@ package syl
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/fatih/color"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var buffer *bytes.Buffer
@@ -108,19 +113,24 @@ func TestRun(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			buffer.Reset()
+			// set up the clean up after test
+			defer func() {
+				buffer.Reset()
+				startCmd = func(c *exec.Cmd) error { return nil }
+				exit = func() { return }
+			}()
 
 			// prepare mock for external URL
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				writeMockedHTTPResponse(t, w, tc.mockTargetSiteRes)
 			}))
 			defer ts.Close()
-
 			url := tc.url
 			if tc.url == "" {
 				url = ts.URL
 			}
 
+			// execute
 			Run(tc.durStr, url, tc.opts)
 
 			// evaluate result
@@ -131,4 +141,63 @@ func TestRun(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPrepareCommand(t *testing.T) {
+	// set up the clean up after test
+	defer func() {
+		goOS = runtime.GOOS
+	}()
+
+	cases := map[string]struct {
+		os      string
+		want    *exec.Cmd
+		wantErr error
+	}{
+		"linux": {
+			os: "linux",
+			want: &exec.Cmd{
+				Path: "xdg-open",
+				Args: []string{"xdg-open", "https://www.google.com/"},
+			},
+		},
+		"windows": {
+			os: "windows",
+			want: &exec.Cmd{
+				Path: "rundll32",
+				Args: []string{"rundll32", "url.dll,FileProtocolHandler", "https://www.google.com/"},
+			},
+		},
+		"darwin": {
+			os: "darwin",
+			want: &exec.Cmd{
+				Path: "/usr/bin/open",
+				Args: []string{"open", "https://www.google.com/"},
+			},
+		},
+		"unknown OS": {
+			os:      "👽",
+			wantErr: errUnsupportedOS,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			// set up
+			goOS = tc.os
+
+			// execute
+			res, err := prepareCommand("https://www.google.com/")
+
+			// evaludate results
+			cmpOpts := cmpopts.IgnoreUnexported(exec.Cmd{})
+			if diff := cmp.Diff(tc.want, res, cmpOpts); diff != "" {
+				t.Errorf("response didn't match (-want / +got)\n%s", diff)
+			}
+			if !errors.Is(tc.wantErr, err) {
+				t.Errorf("unexpected error, want: %v, got: %v", tc.wantErr, err)
+			}
+		})
+	}
+
 }

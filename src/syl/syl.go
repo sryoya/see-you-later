@@ -86,7 +86,7 @@ func openURLWithBrowser(url string) error {
 func prepareCommand(url string) (*exec.Cmd, error) {
 	var cmd *exec.Cmd
 
-	switch runtime.GOOS {
+	switch goOS {
 	case "linux":
 		cmd = exec.Command("xdg-open", url)
 	case "windows":
