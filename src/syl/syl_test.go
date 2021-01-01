@@ -75,7 +75,7 @@ func TestRun(t *testing.T) {
 		wantOutput []string
 	}{
 		"success": {
-			durStr: "1s",
+			durStr: "1ms",
 
 			mockTargetSiteRes: &mockHTTPResponse{
 				statusCode:  200,
@@ -88,7 +88,7 @@ func TestRun(t *testing.T) {
 			},
 		},
 		"suceess but non title is gotten by non http protocol": {
-			durStr: "1s",
+			durStr: "1ms",
 			url:    "www.google.com", // important
 
 			wantOutput: []string{"Hope to see you later!",
@@ -97,7 +97,7 @@ func TestRun(t *testing.T) {
 			},
 		},
 		"suceess but non title is gotten by non existing url": {
-			durStr: "1s",
+			durStr: "1ms",
 			url:    "http://not-existing-exsting",
 			mockTargetSiteRes: &mockHTTPResponse{
 				statusCode:  200,
@@ -109,6 +109,43 @@ func TestRun(t *testing.T) {
 				"no such host", // important
 			},
 		},
+		"success but non title is gotten by non html response": {
+			durStr: "1ms",
+
+			mockTargetSiteRes: &mockHTTPResponse{
+				statusCode:  200,
+				contentType: "application/json",
+				response:    `{"title": "syl"}`,
+			},
+
+			wantOutput: []string{"Hope to see you later!",
+				"Happy to see you! I hope you enjoy",
+			},
+		},
+		"suceess but non title is gotten by non successfully http response code": {
+			durStr: "1ms",
+
+			mockTargetSiteRes: &mockHTTPResponse{
+				statusCode:  404,
+				contentType: "text/html; charset=utf-8",
+				response:    testHTML,
+			},
+
+			wantOutput: []string{"Hope to see you later!",
+				"Happy to see you! I hope you enjoy",
+			},
+		},
+		"error: invalid duration string": {
+			durStr: "🍣",
+
+			mockTargetSiteRes: &mockHTTPResponse{
+				statusCode:  200,
+				contentType: "text/html; charset=utf-8",
+				response:    testHTML,
+			},
+
+			wantOutput: []string{errInvalidDuration.Error()},
+		},
 	}
 
 	for name, tc := range cases {
@@ -116,8 +153,7 @@ func TestRun(t *testing.T) {
 			// set up the clean up after test
 			defer func() {
 				buffer.Reset()
-				startCmd = func(c *exec.Cmd) error { return nil }
-				exit = func() { return }
+				goOS = runtime.GOOS
 			}()
 
 			// prepare mock for external URL
