@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/sryoya/see-you-later/src/syl"
+	"github.com/sryoya/see-you-later/internal/syl"
 )
 
 var cfgFile string
