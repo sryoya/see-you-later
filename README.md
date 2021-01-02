@@ -24,6 +24,6 @@ $ syl [duration] [URL]
 
 example
 ```bash
-$ syl 30min https://play.golang.org/
+$ syl 30m https://play.golang.org/
 ```
 
