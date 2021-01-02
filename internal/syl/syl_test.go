@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/fatih/color"
-	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var buffer *bytes.Buffer
@@ -186,30 +185,21 @@ func TestPrepareCommand(t *testing.T) {
 	}()
 
 	cases := map[string]struct {
-		os      string
-		want    *exec.Cmd
-		wantErr error
+		os          string
+		wantCmdArgs []string
+		wantErr     error
 	}{
 		"linux": {
-			os: "linux",
-			want: &exec.Cmd{
-				Path: "xdg-open",
-				Args: []string{"xdg-open", "https://www.google.com/"},
-			},
+			os:          "linux",
+			wantCmdArgs: []string{"xdg-open", "https://www.google.com/"},
 		},
 		"windows": {
-			os: "windows",
-			want: &exec.Cmd{
-				Path: "rundll32",
-				Args: []string{"rundll32", "url.dll,FileProtocolHandler", "https://www.google.com/"},
-			},
+			os:          "windows",
+			wantCmdArgs: []string{"rundll32", "url.dll,FileProtocolHandler", "https://www.google.com/"},
 		},
 		"darwin": {
-			os: "darwin",
-			want: &exec.Cmd{
-				Path: "/usr/bin/open",
-				Args: []string{"open", "https://www.google.com/"},
-			},
+			os:          "darwin",
+			wantCmdArgs: []string{"open", "https://www.google.com/"},
 		},
 		"unknown OS": {
 			os:      "👽",
@@ -226,9 +216,10 @@ func TestPrepareCommand(t *testing.T) {
 			res, err := prepareCommand("https://www.google.com/")
 
 			// evaludate results
-			cmpOpts := cmpopts.IgnoreUnexported(exec.Cmd{})
-			if diff := cmp.Diff(tc.want, res, cmpOpts); diff != "" {
-				t.Errorf("response didn't match (-want / +got)\n%s", diff)
+			if tc.wantCmdArgs != nil {
+				if diff := cmp.Diff(tc.wantCmdArgs, res.Args); diff != "" {
+					t.Errorf("response didn't match (-want / +got)\n%s", diff)
+				}
 			}
 			if !errors.Is(tc.wantErr, err) {
 				t.Errorf("unexpected error, want: %v, got: %v", tc.wantErr, err)
