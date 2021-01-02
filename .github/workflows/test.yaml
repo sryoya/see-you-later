@@ -23,7 +23,7 @@ jobs:
         go-version: 1.5
     - name: setup env
       run: |
-        echo "GOPATHr=${{ github.workspace }}/go" >> $GITHUB_ENV
+        echo "GOPATH=${{ github.workspace }}/go" >> $GITHUB_ENV
         echo "${{ github.workspace }}/go/bin" >> $GITHUB_PATH
       shell: bash
     - name: checkout
