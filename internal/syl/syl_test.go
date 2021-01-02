@@ -105,7 +105,6 @@ func TestRun(t *testing.T) {
 			},
 			wantOutput: []string{"Hope to see you later! http://not-existing-exsting 👋",
 				"Happy to see you! I hope you enjoy",
-				"no such host", // important
 			},
 		},
 		"success but non title is gotten by non html response": {
