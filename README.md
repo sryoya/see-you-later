@@ -2,12 +2,14 @@
 
 A CLI tool that keeps the site you want to see and opens after the specified duration 👋
 
-![syl-example](https://user-images.githubusercontent.com/14014676/103462484-d034f080-4d68-11eb-8b42-5b309f855b00.gif)
+![syl-example](https://user-images.githubusercontent.com/14014676/104760657-02047900-57a5-11eb-9861-0d789298828d.gif)
 
 ## ❓ What is this for?
+Have you experienced somethings like these? 
+- You find the article, movies..etc that you want to view, but you have a task to do right now :dash:
+- You receive the Slack notification that seems to need the response, but you are busy on the coding :man::computer:
 
-This tool is assumued to be used, for example, when you have a article to view but you are busy on your current task and cannot view that now.
-In the same way, you can also use this for like a Slack message you want to reply later, a Google Spreadsheet you want to work on later...etc.
+In such cases, you can keep the link and view it later by this tool as long as there are a CLI in front of you.
 
 ## 🚀  Install
 
