@@ -5,11 +5,11 @@ A CLI tool that keeps the site you want to see and opens after the specified dur
 ![syl-example](https://user-images.githubusercontent.com/14014676/104760657-02047900-57a5-11eb-9861-0d789298828d.gif)
 
 ## ❓ What is this for?
-Have you experienced somethings like these? 
+Have you experienced something like these? 
 - You find the article, movies..etc that you want to view, but you have a task to do right now :dash:
 - You receive the Slack notification that seems to need the response, but you are busy on the coding :man::computer:
 
-In such cases, you can keep the link and view it later by this tool as long as there are a CLI in front of you.
+In such cases, you can keep the link and view it later by this tool as long as there is a CLI in front of you.
 
 ## 🚀  Install
 
