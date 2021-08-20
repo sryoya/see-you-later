@@ -1,6 +1,6 @@
 # see-you-later
 
-A CLI tool that keeps the site you want to see and opens after the specified duration 👋
+A CLI tool that temporalily holds the website you want to see and opens it after the specified duration 👋
 
 ![syl-example](https://user-images.githubusercontent.com/14014676/104760657-02047900-57a5-11eb-9861-0d789298828d.gif)
 
